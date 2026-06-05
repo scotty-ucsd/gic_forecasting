@@ -1,6 +1,5 @@
 # Project Pipeline and Reproducibility Guide
 
-* NOTE: check all args for bash commands
 
 This repository contains a modular machine learning pipeline for station-level geomagnetic disturbance forecasting using fused space weather observations from GOES XRS, GOES magnetometer, OMNI, Swarm, and SuperMAG.
 
@@ -21,13 +20,20 @@ This project uses `uv` for dependency management.
 2. From the repository root, create and sync the environment:
 
 ```bash
-uv sync
+# Create the environment
+uv venv
+
+# Activate the environment
+source .venv/bin/activate
+
+# Sync the requirements into the environment
+uv pip sync requirements.txt
 ```
 
 3. Run Python modules through `uv`:
 
 ```bash
-uv run python -m <module_name>
+python -m <module_name>
 ```
 
 ---
@@ -150,49 +156,49 @@ historical reconstruction.
 ### Step 1 — Generate synthetic SuperMAG smoke-test data
 
 ```bash
-python3 -m src.tests.generate_synthetic_smoke_test_data \
+python -m src.tests.generate_synthetic_smoke_test_data \
   --start-date 2015-01-01 \
   --end-date 2015-04-30 \
   --output-root data/test/raw/supermag \
   --force
 ```
 
-⏱ ~25 min
+~25 min
 
 ### Step 2 — Generate subset smoke-test data (OMNI, GOES, Swarm)
 
 ```bash
-python3 -m src.tests.generate_subset_smoke_test_data \
+python -m src.tests.generate_subset_smoke_test_data \
   --start-date 2015-01-01 \
   --end-date 2015-04-30
 ```
 
-⏱ ~10 min
+~10 min
 
 ### Step 3 — Clean interim sources
 
 ```bash
-python3 -m src.clean.interim.supermag \
+python -m src.clean.interim.supermag \
   --input-dir data/test/raw/supermag \
   --output-dir data/test/interim/supermag
 
-python3 -m src.clean.interim.omni \
+python -m src.clean.interim.omni \
   --input-dir data/test/raw/omni \
   --output-dir data/test/interim/omni
 
-python3 -m src.clean.interim.goes_xrs \
+python -m src.clean.interim.goes_xrs \
   --raw-dir data/test/raw/goes_xrs \
   --output-dir data/test/interim/goes_xrs \
   --start-date 2015-01-01 \
   --end-date 2015-04-30
 
-python3 -m src.clean.interim.goes_mag \
+python -m src.clean.interim.goes_mag \
   --input-dir data/test/raw/goes_mag \
   --output-dir data/test/interim/goes_mag \
   --start-date 2015-01-01 \
   --end-date 2015-04-30
 
-python3 -m src.clean.interim.swarm \
+python -m src.clean.interim.swarm \
   --input-dir data/test/raw/swarm \
   --output-dir data/test/interim/swarm
 ```
@@ -202,31 +208,31 @@ python3 -m src.clean.interim.swarm \
 > **Note:** `swarm_1min.py` must run before `swarm_chaos.py`.
 
 ```bash
-python3 src/preprocess/omni.py \
+python src/preprocess/omni.py \
   --input-dir data/test/interim/omni/ \
   --output-dir data/test/preprocessed/omni \
   --start-date 2015-01-01 \
   --end-date 2015-04-30
 
-python3 src/preprocess/goes_xrs.py \
+python src/preprocess/goes_xrs.py \
   --input-root data/test/interim/goes_xrs/ \
   --output-root data/test/preprocessed/goes_xrs
 
-python3 src/preprocess/goes_mag.py \
+python src/preprocess/goes_mag.py \
   --input-dir data/test/interim/goes_mag/ \
   --output-dir data/test/preprocessed/goes_mag
 
-python3 src/preprocess/supermag.py \
+python src/preprocess/supermag.py \
   --input-dir data/test/interim/supermag/ \
   --output-dir data/test/preprocessed/supermag \
   --start-date 2015-01-01 \
   --end-date 2015-04-30
 
-python3 src/preprocess/swarm_1min.py \
+python src/preprocess/swarm_1min.py \
   --input-dir data/test/interim/swarm/ \
   --output-dir data/test/preprocessed/swarm_1min
 
-python3 src/preprocess/swarm_chaos.py \
+python src/preprocess/swarm_chaos.py \
   --input-dir data/test/preprocessed/swarm_1min/ \
   --output-dir data/test/preprocessed/swarm_chaos
 ```
@@ -234,7 +240,7 @@ python3 src/preprocess/swarm_chaos.py \
 ### Step 5 — Fuse sources
 
 ```bash
-python3 src/fusion/data_fusion.py \
+python src/fusion/data_fusion.py \
   --supermag-root data/test/preprocessed/supermag \
   --omni-root data/test/preprocessed/omni \
   --goes-xrs-root data/test/preprocessed/goes_xrs \
@@ -246,7 +252,7 @@ python3 src/fusion/data_fusion.py \
 ### Step 6 — Clean fused station times
 
 ```bash
-python3 src/clean/fused/clean_fused_station_times.py \
+python src/clean/fused/clean_fused_station_times.py \
   --input-dir data/test/fused/station_time_master \
   --output-dir data/test/fused/interim
 ```
@@ -254,7 +260,7 @@ python3 src/clean/fused/clean_fused_station_times.py \
 ### Step 7 — Build targets
 
 ```bash
-python3 src/targets/build_station_thresholds.py \
+python src/targets/build_station_thresholds.py \
   --input-dir data/test/fused/interim \
   --output-csv data/test/fused/metadata/station_thresholds.csv \
   --months 201501 201502 \
@@ -262,7 +268,7 @@ python3 src/targets/build_station_thresholds.py \
   --train-end-year 2015 \
   --force
 
-python3 src/targets/attach_station_targets.py \
+python src/targets/attach_station_targets.py \
   --input-dir data/test/fused/interim/ \
   --output-dir data/test/fused/labeled \
   --thresholds-csv data/test/fused/metadata/station_thresholds.csv
@@ -271,7 +277,7 @@ python3 src/targets/attach_station_targets.py \
 ### Step 8 — Build feature regimes
 
 ```bash
-python3 src/features/build_feature_regimes.py \
+python src/features/build_feature_regimes.py \
   --input-root data/test/fused/labeled \
   --output-root data/test/preprocessed/fused/standardized
 ```
@@ -279,7 +285,7 @@ python3 src/features/build_feature_regimes.py \
 ### Step 9 — Build ML dataset and evaluate feature importance
 
 ```bash
-python3 src/dataset/build_ml_dataset.py \
+python src/dataset/build_ml_dataset.py \
   --input-root data/test/preprocessed/fused/standardized \
   --output-root data/test/ml/standardized \
   --split-by date \
@@ -291,26 +297,26 @@ python3 src/dataset/build_ml_dataset.py \
 > this step.
 
 ```bash
-python3 src/features/evaluate_feature_importance.py \
+python src/features/evaluate_feature_importance.py \
   --input-root data/test/ml/standardized \
   --output-root data/test/reports/features/importance \
   --feature-metadata-json data/test/ml/standardized/metadata/feature_columns.json
 ```
 
-⏱ ~20 min
+~20 min
 
 ### Step 10 — Train models
 
 ```bash
-python3 src/models/classification/lightgbm_main.py \
+python src/models/classification/lightgbm_main.py \
   --data-root data/test/ml/standardized \
   --output-root data/test/reports/models/lightgbm_main
 ```
 
-⏱ ~30 min
+~30 min
 
 ```bash
-python3 src/models/classification/lstm_classifier.py \
+python src/models/classification/lstm_classifier.py \
   --data-root data/test/ml/standardized \
   --output-root data/test/reports/models/lstm_classifier \
   --batch-size 1024 \
@@ -333,7 +339,7 @@ python3 src/models/classification/lstm_classifier.py \
 ### Step 11 — Evaluate models
 
 ```bash
-python3 src/evaluation/evaluate_model_target_station.py --force
+python src/evaluation/evaluate_model_target_station.py --force
 ```
 
 Output: `data/reports/evaluation/target_station/`
@@ -341,7 +347,7 @@ Output: `data/reports/evaluation/target_station/`
 ### Step 12 — Generate evaluation plots
 
 ```bash
-python3 src/evaluation/plot_target_station_results.py --force
+python src/evaluation/plot_target_station_results.py --force
 ```
 
 Output: `data/reports/evaluation/target_station/plots/`
@@ -349,12 +355,12 @@ Output: `data/reports/evaluation/target_station/plots/`
 ### Step 13 — Generate report figures and tables
 
 ```bash
-python3 src/analysis/latex_plots_and_tables.py --force
+python src/analysis/latex_plots_and_tables.py --force
 ```
 
 Output: `data/reports/analysis/latex_plots/`
 
-⏱ < 1 min
+~ 1 min
 
 ---
 
