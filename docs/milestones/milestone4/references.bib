@@ -1,0 +1,416 @@
+% --- Reports & Policy ---
+
+@techreport{SWAG2024,
+  author      = {{Space Weather Advisory Group}},
+  title       = {Results of the First National Survey of User Needs for Space Weather},
+  institution = {NOAA},
+  year        = {2024},
+  note        = {Overarching Theme 1: Regionalization and Impacts},
+}
+
+@book{Decadal2025,
+  author    = {{National Academies of Sciences, Engineering, and Medicine}},
+  title     = {The Next Decade of Discovery in Solar and Space Physics: Exploring and Safeguarding Humanity's Home in Space},
+  publisher = {The National Academies Press},
+  year      = {2025},
+  address   = {Washington, DC},
+  doi       = {10.17226/27679}
+}
+
+% --- The "Gray Box" & ML Theory ---
+
+@article{Grawe2021,
+  author  = {Grawe, M. A. and Makela, J. J.},
+  title   = {Predictability of geomagnetically induced currents as a function of available magnetic field information},
+  journal = {Space Weather},
+  volume  = {19},
+  year    = {2021},
+  pages   = {e2021SW002747},
+  doi     = {10.1029/2021SW002747}
+}
+
+@article{Billcliff2026,
+  author  = {Billcliff, M. and Smith, A. W. and Owens, M. and Woo, W. L. and Barnard, L. and Edward-Inatimi, N. and Rae, I. J.},
+  title   = {Extended lead-time geomagnetic storm forecasting with solar wind ensembles and machine learning},
+  journal = {Space Weather},
+  volume  = {24},
+  year    = {2026},
+  pages   = {e2025SW004823},
+  doi     = {10.1029/2025SW004823}
+}
+
+@article{Tishby1999,
+  author  = {Tishby, Naftali and Pereira, Fernando C. and Bialek, William},
+  title   = {The information bottleneck method},
+  journal = {arXiv preprint arXiv:physics/0004057},
+  year    = {1999},
+  doi     = {10.48550/arXiv.physics/0004057}
+}
+
+@article{Raissi2019,
+  author  = {Raissi, M. and Perdikaris, P. and Karniadakis, G. E.},
+  title   = {Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations},
+  journal = {Journal of Computational Physics},
+  volume  = {378},
+  pages   = {686--707},
+  year    = {2019},
+  doi     = {10.1016/j.jcp.2018.10.045}
+}
+
+@article{Bengio2014,
+  author  = {Bengio, Yoshua and Courville, Aaron and Vincent, Pascal},
+  title   = {Representation Learning: A Review and New Perspectives},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume  = {35},
+  number  = {8},
+  pages   = {1798--1828},
+  year    = {2013},
+  eprint  = {1206.5538},
+  archivePrefix = {arXiv}
+}
+
+@article{Camporeale2019,
+  author  = {Camporeale, Enrico},
+  title   = {The Challenge of Machine Learning in Space Weather: Nowcasting and Forecasting},
+  journal = {Space Weather},
+  volume  = {17},
+  number  = {8},
+  year    = {2019},
+  doi     = {10.1029/2018SW002061},
+  note    = {Argues for physics-informed "Gray Box" models}
+}
+
+@article{Camporeale2020,
+  author  = {Camporeale, Enrico and Cash, M. D. and Singer, H. J. and Balch, C. C. and Huang, Z. and Toth, G.},
+  title   = {A Gray-Box Model for a Probabilistic Estimate of Regional Ground Magnetic Perturbations},
+  journal = {Journal of Geophysical Research: Space Physics},
+  volume  = {125},
+  number  = {11},
+  year    = {2020},
+  pages   = {e2020JA028077},
+  doi     = {10.1029/2020JA028077}
+}
+
+@article{Chen2019,
+  author  = {Chen, Y. and others},
+  title   = {Geomagnetic Storm Prediction Using a Deep Learning Method},
+  journal = {Space Weather},
+  year    = {2019},
+  note    = {Seminal work on CNNs/LSTMs in Heliophysics}
+}
+
+@article{Thaker2025,
+  author  = {Thaker, A. and others},
+  title   = {Evaluating Artificial Intelligence Approaches for Space Weather Prediction},
+  journal = {Space Weather},
+  year    = {2025},
+  note    = {Comprehensive review of AI forecasting metrics}
+}
+
+% --- The "Direct-Drive" Competitors (New) ---
+
+@article{Ferdousi2025,
+  author  = {Ferdousi, B. and others},
+  title   = {Current State of Geomagnetic Disturbances (GMD) Modeling: An Overview of Physics-Based and Machine Learning Efforts},
+  journal = {Space Weather (AFRL Review)},
+  year    = {2025},
+  note    = {Classifies limitations of MHD (speed) vs. ML (interpretability)}
+}
+
+@article{Chen2025_GeoDGP,
+  author  = {Chen, H. and Toth, G. and Chen, Y. and others},
+  title   = {GeoDGP: One-Hour Ahead Global Probabilistic Geomagnetic Perturbation Forecasting},
+  journal = {Space Weather},
+  year    = {2025},
+  doi     = {10.1029/2024SW004301},
+  note    = {SOTA probabilistic model; relies on Dst and heavy compute}
+}
+
+@article{Camporeale2025,
+  author  = {Camporeale, Enrico and others},
+  title   = {Verification of the NOAA Space Weather Prediction Center Solar Flare Forecast (1998–2024)},
+  journal = {Space Weather},
+  year    = {2025},
+  note    = {Highlights high false alarm rates in operational models}
+}
+
+@article{Keebler2025,
+  author  = {Keebler, T. and others},
+  title   = {Simulating Extreme Space Weather With Kinetic Magnetotail Reconnection},
+  journal = {Journal of Geophysical Research: Space Physics},
+  year    = {2025},
+  note    = {Demonstrates failure of fluid MHD in extreme events}
+}
+
+% --- Physics & Data Foundations (The "System") ---
+@article{kloss2025chaos8,
+  author  = {Kloss, C. and Finlay, C. C. and Olsen, N. and T{\o}ffner-Clausen, L. and Gillet, N. and Grayver, A.},
+  title   = {The CHAOS-8 geomagnetic field model},
+  journal = {Earth, Planets and Space},
+  year    = {2025}
+}
+
+@article{Newell2007,
+  author  = {Newell, Patrick T. and others},
+  title   = {A nearly universal solar wind-magnetosphere coupling function},
+  journal = {Journal of Geophysical Research: Space Physics},
+  year    = {2007},
+  note    = {Source of the dPhi/dt coupling formula}
+}
+
+@article{Vokhmyanin2019,
+  author  = {Vokhmyanin, M. V. and Stepanova, M. V. and Valdivia, J. A.},
+  title   = {Evaluation of the Solar Wind Monitor Location on the Accuracy of Magnetic Storm Forecasts},
+  journal = {Space Weather},
+  year    = {2019},
+  note    = {Establishes the L1 reliability gating criteria}
+}
+
+@article{Dai2024,
+  author  = {Dai, L. and others},
+  title   = {Global-scale magnetosphere convection driven by dayside magnetic reconnection},
+  journal = {Nature Communications},
+  year    = {2024},
+  note    = {Validates dayside features for convection driving}
+}
+
+@article{Shen2023,
+  author  = {Shen, Y. and others},
+  title   = {Energetic Electron Flux Dropouts Measured by ELFIN in the Ionospheric Projection},
+  journal = {Journal of Geophysical Research: Space Physics},
+  year    = {2023},
+  note    = {Justifies use of LEO particle data for magnetotail sensing}
+}
+
+@article{Nagai2023,
+  author  = {Nagai, T. and others},
+  title   = {Location and Timing of Magnetic Reconnections in Earth's Magnetotail: Geotail Survey},
+  journal = {Journal of Geophysical Research: Space Physics},
+  year    = {2023},
+  note    = {Basis for VDH coordinate transformations}
+}
+
+@article{Abduallah2024,
+  author  = {Abduallah, Y. and others},
+  title   = {Assessing Selection Bias in Geomagnetic Storm Datasets},
+  journal = {Space Weather},
+  year    = {2024},
+  note    = {Discusses the "42 storms" selection bias issue}
+}
+
+@article{Ishii2025,
+  author  = {Ishii, M. and others},
+  title   = {Global landscape of space weather observations, research and operations},
+  journal = {Advances in Space Research},
+  year    = {2025},
+  note    = {Review of global monitoring gaps}
+}
+
+% --- Data Foundations & Networks ---
+
+@misc{ESA2013,
+  author       = {{European Space Agency}},
+  title        = {Swarm Magnetic Field Mission Level-1b and Level-2 Data Collections},
+  howpublished = {ESA Earth Online},
+  year         = {2013},
+  url          = {https://esa.int/missions/swarm/data},
+  note         = {Accessed: May 10, 2026}
+}
+
+@article{Gjerloev2009,
+  author  = {Gjerloev, Jesper W.},
+  title   = {A Global Ground-Based Magnetometer Initiative},
+  journal = {EOS, Transactions American Geophysical Union},
+  year    = {2009},
+  volume  = {90},
+  pages   = {230--231},
+  doi     = {10.1029/2009EO270002}
+}
+
+@article{Gjerloev2012,
+  author  = {Gjerloev, J. W.},
+  title   = {The SuperMAG data processing technique},
+  journal = {Journal of Geophysical Research: Space Physics},
+  volume  = {117},
+  number  = {A9},
+  pages   = {A09213},
+  year    = {2012},
+  doi     = {10.1029/2012JA017683}
+}
+
+@article{Mann2008,
+  author  = {Mann, I. R. and Milling, D. K. and Rae, I. J. and Ozeke, L. G. and Kale, A. and Kale, Z. C. and Murphy, K. R. and Parent, A. and Usanova, M. E. and Quality, D. M. and Spanswick, E. and Donovan, E. F.},
+  title   = {The CARISMA magnetometer array},
+  journal = {Space Science Reviews},
+  volume  = {141},
+  number  = {1},
+  pages   = {313--351},
+  year    = {2008},
+  doi     = {10.1007/s11214-008-9446-2}
+}
+
+@misc{NOAA2020,
+  author       = {{NOAA National Centers for Environmental Information}},
+  title        = {GOES-NOP (GOES 13-15) Science-Quality Magnetometer and X-Ray Sensor (XRS) Level-2 Data},
+  howpublished = {NOAA NCEI Archive},
+  year         = {2020},
+  note         = {Accessed: May 10, 2026}
+}
+
+@misc{NOAA2021,
+  author       = {{NOAA National Centers for Environmental Information}},
+  title        = {GOES-R Series (GOES-16, GOES-17, GOES-18) Space Weather Science-Quality Level-2 1-Minute Averages},
+  howpublished = {NOAA NCEI Archive},
+  year         = {2021},
+  note         = {Accessed: May 10, 2026}
+}
+
+@misc{Papitashvili2020,
+  author       = {Papitashvili, N. E. and King, J. H.},
+  title        = {OMNI 1-min Data Set for 2015-01-01 to 2024-12-31},
+  howpublished = {NASA Space Physics Data Facility},
+  year         = {2020},
+  note         = {Accessed: May 10, 2026}
+}
+
+@article{Tanskanen2009,
+  author  = {Tanskanen, E. I.},
+  title   = {A Brief history of the IMAGE magnetometer network},
+  journal = {Space Science Reviews},
+  volume  = {141},
+  number  = {1},
+  pages   = {425--435},
+  year    = {2009},
+  doi     = {10.1007/s11214-009-9493-2}
+}
+
+% --- Python Packages ---
+@article{numpy2020array,
+  title   = {Array programming with NumPy},
+  author  = {Harris, Charles R. and Millman, K. Jarrod and van der Walt, St{\'e}fan J. and Gommers, Ralf and Virtanen, Pauli and Cournapeau, David and Wieser, Eric and Taylor, Julian and Berg, Sebastian and Smith, Nathaniel J. and others},
+  journal = {Nature},
+  volume  = {585},
+  number  = {7825},
+  pages   = {357--362},
+  year    = {2020},
+  doi     = {10.1038/s41586-020-2649-2}
+}
+
+@inproceedings{mckinney2010pandas,
+  title     = {Data Structures for Statistical Computing in Python},
+  author    = {McKinney, Wes},
+  booktitle = {Proceedings of the 9th Python in Science Conference},
+  pages     = {56--61},
+  year      = {2010},
+  editor    = {van der Walt, St{\'e}fan and Millman, Jarrod},
+  doi       = {10.25080/Majora-92bf1922-00a}
+}
+
+@article{pedregosa2011scikit,
+  title   = {Scikit-learn: Machine Learning in Python},
+  author  = {Pedregosa, Fabian and Varoquaux, Ga{\"e}l and Gramfort, Alexandre and Michel, Vincent and Thirion, Bertrand and Grisel, Olivier and Blondel, Mathieu and Prettenhofer, Peter and Weiss, Ron and Dubourg, Vincent and others},
+  journal = {Journal of Machine Learning Research},
+  volume  = {12},
+  pages   = {2825--2830},
+  year    = {2011}
+}
+
+@inproceedings{chen2016xgboost,
+  title     = {XGBoost: A Scalable Tree Boosting System},
+  author    = {Chen, Tianqi and Guestrin, Carlos},
+  booktitle = {Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+  pages     = {785--794},
+  year      = {2016},
+  doi       = {10.1145/2939672.2939785}
+}
+
+@inproceedings{ke2017lightgbm,
+  title     = {LightGBM: A Highly Efficient Gradient Boosting Decision Tree},
+  author    = {Ke, Guolin and Meng, Qi and Finley, Thomas and Wang, Taifeng and Chen, Wei and Ma, Weidong and Ye, Qiwei and Liu, Tie-Yan},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  year      = {2017}
+}
+
+@misc{paszke2017pytorch,
+  title        = {Automatic Differentiation in PyTorch},
+  author       = {Paszke, Adam and Gross, Sam and Chintala, Soumith and Chanan, Gregory and Yang, Edward and DeVito, Zachary and Lin, Zeming and Desmaison, Alban and Antiga, Luca and Lerer, Adam},
+  year         = {2017},
+  howpublished = {NeurIPS Autodiff Workshop}
+}
+
+@software{aburrell2025apexpy,
+  author  = {Burrell, Angeline G.},
+  title   = {ApexPy Version 2.1.0},
+  year    = {2025},
+  doi     = {10.5281/zenodo.14610316},
+  url     = {https://doi.org/10.5281/zenodo.14610316}
+}
+
+@article{emmert2010apex,
+  title   = {A computationally compact representation of magnetic-apex and quasi-dipole coordinates with smooth base vectors},
+  author  = {Emmert, J. T. and Richmond, A. D. and Drob, D. P.},
+  journal = {Journal of Geophysical Research: Space Physics},
+  volume  = {115},
+  number  = {A8},
+  year    = {2010},
+  doi     = {10.1029/2010JA015326}
+}
+
+@article{richmond1995apex,
+  title   = {Ionospheric electrodynamics using magnetic apex coordinates},
+  author  = {Richmond, A. D.},
+  journal = {Journal of Geomagnetism and Geoelectricity},
+  volume  = {47},
+  number  = {2},
+  pages   = {191--212},
+  year    = {1995},
+  doi     = {10.5636/jgg.47.191}
+}
+
+@software{chaosmagpy2019zenodo,
+  title   = {ChaosMagPy},
+  year    = {2019},
+  doi     = {10.5281/zenodo.3352398},
+  url     = {https://doi.org/10.5281/zenodo.3352398}
+}
+
+@article{finlay2020chaos7,
+  title   = {The CHAOS-7 geomagnetic field model and observed changes in the South Atlantic Anomaly},
+  author  = {Finlay, C. C. and Kloss, C. and Olsen, N. and Hammer, M. D. and T{\o}ffner-Clausen, L. and Grayver, A. and Kuvshinov, A.},
+  journal = {Earth, Planets and Space},
+  volume  = {72},
+  number  = {1},
+  pages   = {156},
+  year    = {2020},
+  doi     = {10.1186/s40623-020-01252-9}
+}
+
+@misc{cdasws,
+  title        = {cdasws: Python interface to the CDAWeb Data Service},
+  author       = {{NASA CDAWeb Team}},
+  note         = {Software/documentation citation for package use},
+  url          = {https://cdaweb.gsfc.nasa.gov/WebServices/REST/py/cdasws/}
+}
+
+@misc{cdflib,
+  title        = {cdflib: CDF Python library},
+  author       = {{cdflib developers}},
+  note         = {Software citation for package use},
+  url          = {https://cdflib.readthedocs.io/}
+}
+
+@misc{ppigrf,
+  title        = {ppigrf: Pure Python International Geomagnetic Reference Field},
+  author       = {{ppigrf developers}},
+  note         = {Software citation for package use},
+  url          = {https://github.com/IAGA-VMOD/ppigrf}
+}
+
+@software{viresclient2019zenodo,
+  title   = {viresclient},
+  year    = {2019},
+  doi     = {10.5281/zenodo.2554162},
+  url     = {https://doi.org/10.5281/zenodo.2554162}
+}
+

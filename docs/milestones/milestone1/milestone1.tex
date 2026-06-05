@@ -1,0 +1,165 @@
+\documentclass{article}
+
+% Required packages
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+
+% Set page geometry
+\geometry{a4paper, margin=1in}
+
+% Configure listings for Python
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  captionpos=b,
+  tabsize=4,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  commentstyle=\color{gray}\textit,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{red}
+}
+
+% For centering images and tables
+\usepackage{float}
+
+\begin{document}
+
+\pagestyle{fancy}
+\chead{DSC 288: Capstone (Spring 2026)}
+\lhead{Milestone 1: Project Abstract}
+\rhead{R. Scotty Rogers}
+
+
+\begin{center}
+\Large\textbf{Physics-Informed Machine Learning for Regional Geomagnetic Hazard Forecasting}\\
+\end{center}
+
+\section*{Overview}
+Apply physics-informed ML models to improve regional forecasting of hazardous geomagnetic perturbations ($|dB/dt|$) using an end-to-end multimodal dataset spanning Solar / L1 / GEO / LEO / Ground observation layers. Regional $|dB/dt|$ forecasting is framed here as a supervised binary classification problem, with optional sequence-model comparison as a secondary extension.\\
+
+\noindent \textbf{Classification Task}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|p{8cm}|}
+\hline
+& \textbf{Model} & \textbf{Notes} \\ \hline
+Baseline & Persistence + Climatology & Predict label/rate from recent history; required floor for all skill scores \\ \hline
+Linear reference & Logistic Regression & Establishes linear ceiling; coefficient-level interpretability \\ \hline
+\textbf{Primary} & \textbf{LightGBM} & Nonlinear tabular classifier; handles imbalance and missing data natively; SHAP-compatible \\ \hline
+\textbf{Secondary} & \textbf{LSTM} & Established for solar wind sequence modeling;handles variable-length temporal dependencies; tests whether learned temporal structure adds skill beyond LightGBM's engineered lag features \\ \hline
+\end{tabular}
+\caption{Classification task model hierarchy: baselines, linear reference, and primary/secondary learners.}
+\end{table}
+
+\section*{Abstract}
+
+\subsection*{Background}
+Coronal mass ejections (CMEs) and high-speed solar wind streams drive dynamic deformations of Earth's magnetosphere, triggering substorms and geomagnetically induced currents (GICs). GICs pose measurable risks to electrical power grids, including voltage instability and transformer saturation, with documented economic consequences during major events such as the March 1989 Quebec blackout. Despite this threat, current operational space weather forecasting is largely limited to broad global indices such as Kp and Dst, which do not resolve the regional ground-level magnetic perturbations that matter most to grid operators.\\
+
+\noindent Forecasting the rate of change of the geomagnetic field, $|dB/dt|$, is widely used as a proxy for GIC hazard because it captures the inductive forcing on ground infrastructure more directly than slowly varying storm indices. However, $|dB/dt|$ is spatially structured, temporally intermittent, and driven by a nonlinear chain of processes spanning solar eruptions, L1 solar wind conditions, magnetospheric state, and ionospheric currents. No single upstream measurement captures all of this variability, motivating a multimodal observational approach that spans Solar/L1/GEO/LEO/ground data layers.\\
+
+\noindent This project applies physics-informed machine learning to forecast regional $|dB/dt|$ hazard one hour in advance using a fused dataset spanning Solar Cycle 24 and the rising phase of Cycle 25 (2015 to 2024).
+
+\subsection*{Problem Definition}
+
+\subsubsection*{Regional Hazard Classification}
+\begin{itemize}
+  \item \textbf{Binary Classification Task:} Given a window of multimodal space environment observations at time $t$, predict whether the magnitude of the horizontal geomagnetic field rate of change, $|dB/dt|$, will exceed a regionally calibrated hazard threshold at a target high-latitude SuperMAG ground station within a 60-minute lead time.
+  \item \textbf{Inputs:} A fixed-width feature vector constructed from GOES X-ray flux (solar driver), OMNI 1-minute solar wind and interplanetary magnetic field data (L1), GOES geostationary magnetic field observations (GEO), Swarm-derived electron flux and field-aligned current proxies by MLT zone (LEO), SuperMAG ground station magnetic field components and recent $|dB/dt|$ history (ground), and physics-informed features including the Newell coupling function $\Phi$, rolling IMF $B_z$ statistics, and cyclical time encodings.
+  \item \textbf{Outputs:} A calibrated probability that $|dB/dt|$ exceeds threshold $\tau$ at a target station within the next 60 minutes, plus a binary alert derived at the HSS-optimal decision threshold.
+\end{itemize}
+
+\subsection*{Motivation}
+
+\subsubsection*{Suitability for Machine Learning}
+This is a well-suited ML problem for several reasons. The Sun-to-ground causal chain is nonlinear and multiscale: simple analytical mappings from solar wind to ground $|dB/dt|$ are known to fail in practice, particularly at high latitudes during substorm onset and CME-driven storm main phases. At the same time, the system is not purely stochastic. The structured upstream drivers such as sustained southward IMF $B_z$ and elevated solar wind dynamic pressure are consistently associated with enhanced ground disturbance, providing predictive signal that ML models can exploit.\\
+
+\noindent The operational goal is not to simulate every microphysical process, but to deliver calibrated risk estimates with sufficient lead time and regional specificity to support grid operator decisions. This makes the problem tractable for discriminative ML approaches (Camporeale, 2020; Sun et al., 2022). The physics-informed framing, embedding domain-derived features such as the Newell coupling function alongside raw observational inputs, improves generalization by encoding known driver-response relationships rather than requiring the model to rediscover them from data alone.
+
+\subsubsection*{Data Availability}
+The project dataset spans January 2015 through December 2024 (120 months, 118 successfully processed), covering both the declining phase of Solar Cycle 24 and the rising phase of Cycle 25. This range mitigates the quiet-time bias present in many existing studies that sample predominantly from solar minimum. The dataset fuses five source layers at one-minute cadence: GOES X-ray flux, OMNI solar wind (CDAWeb), GOES geostationary field (GEO), Swarm electron flux proxies by MLT zone (LEO), and SuperMAG ground station magnetic components and $|dB/dt|$ for three Scandinavian high-latitude stations (ABK, BJN, TRO). The resulting feature matrix contains approximately 5.2 million one-minute records with over 80 input columns, sufficient to support separate training, validation, and temporally held-out test sets (2024 reserved as the primary test year).
+
+\subsection*{Literature Review}
+
+\subsubsection*{Prior Research}
+Regional geomagnetic disturbance forecasting has been approached through both physics-based and data-driven methods. Camporeale et al. (2020) developed a gray-box classifier that enhances NOAA's operational Geospace model with a boosted tree, achieving improved threshold-exceedance prediction at three high-latitude stations; this work is the most direct methodological precedent for the present project. Chen et al. (2025) introduced GeoDGP, a deep Gaussian process model for probabilistic global $dB_H$ forecasting one hour ahead, providing a strong benchmark for probabilistic evaluation and demonstrating that ML approaches can outperform the Geospace and DAGGER operational models on storm sets. Billcliff et al. (2026) demonstrate that probabilistic storm forecasting can be extended to longer lead times by combining solar wind ensemble propagation with logistic regression, though their approach targets global storm indices rather than regional $|dB/dt|$. For evaluation methodology, Camporeale et al. (2025) document systematic calibration failures in operational NOAA solar flare forecasts when compared against simple persistence and climatology baselines, reinforcing the need for rigorous imbalance-aware verification in any operational space weather product.
+
+\subsubsection*{Comparison}
+Relative to prior work, this project advances in three directions:
+\begin{enumerate}
+  \item It uses a richer multimodal input architecture, spanning Solar/L1/GEO/LEO/ground layers, rather than relying on OMNI-only or simulation-assisted features.
+  \item This targets regional $|dB/dt|$ threshold exceedance rather than smooth global indices ($Dst$, $Kp$, $dB_H$), which are less directly tied to GIC risk.
+  \item  Lastly, it covers a longer and more solar-active period than many existing studies, reducing quiet-time data dominance. The approach does not attempt to replace physics-based operational models; rather, it complements them by providing a data-driven, multimodal hazard classifier with calibrated probability outputs and source-attribution capability via SHAP. 
+\end{enumerate}
+
+\subsection*{Approach}
+
+\subsubsection*{Methodology}
+The primary model is a LightGBM binary classifier trained on the fused feature matrix described above. LightGBM is selected because it natively handles class imbalance and missing values, is computationally efficient, and supports SHAP-based feature attribution. These properties are directly relevant given the irregular LEO orbital coverage, the sparse hazardous-event rate, and the need for interpretable source attribution across five input layers. The choice is further motivated by Camporeale et al.\ (2020), who demonstrated that boosted tree classifiers effectively complement physics-based models for regional $|dB/dt|$ threshold exceedance.\\
+
+\noindent The approach is physics-informed in two ways: \\
+\begin{enumerate}
+  \item Physics-derived features, specifically the Newell coupling function $\Phi$, rolling IMF $B_z$ statistics, and cyclical solar time encodings, are embedded as engineered inputs to the classifier, encoding known driver-response relationships
+  \item Model evaluation is structured around operationally meaningful thresholds and imbalance-aware metrics rather than aggregate accuracy.
+\end{enumerate}
+
+\noindent The evaluation protocol uses two baselines: a persistence baseline (predict that the future label matches the most recent observed label) and a climatology baseline (predict the unconditional training-set event rate). Any primary model that fails to exceed both baselines provides no operational value. The primary metric is the Heidke Skill Score (HSS), with secondary reporting of ROC AUC, Brier Skill Score, precision/recall at the HSS-optimal threshold, and a reliability diagram.
+
+\section*{Technical Implementation Details}
+
+\subsection*{Dataset}
+The training dataset fuses five observation layers at one-minute cadence over January 2015 to December 2024:
+\begin{itemize}
+  \item \textbf{Solar:} GOES X-ray flux (1-minute cadence, NOAA NCEI)
+  \item \textbf{L1:} OMNI 1-minute solar wind and IMF data (CDAWeb)
+  \item \textbf{GEO:} GOES geostationary magnetic field observations (NOAA NCEI)
+  \item \textbf{LEO:} Swarm-derived electron flux and field-aligned current proxies by MLT zone (ESA Swarm Science Data System)
+  \item \textbf{Ground:} SuperMAG ground station magnetic field components and $|dB/dt|$ for three Scandinavian high-latitude stations (ABK, BJN, TRO) (SuperMAG)
+\end{itemize}
+
+\subsection*{Feature Engineering}
+Physics-informed features are central to the input representation:
+\begin{itemize}
+  \item \textbf{Newell Coupling Function:} ($\Phi = V^{4/3} |B_T \sin^3(\theta/2)|$): Encodes solar wind-magnetosphere coupling efficiency via magnetic reconnection rate. Included in both instantaneous and rolling (10-minute and 30-minute) forms.
+  \item \textbf{Rolling IMF statistics:} 10-minute and 30-minute rolling means and standard deviations of $B_z$ and $V_x$, capturing sustained southward field excursions rather than instantaneous values.
+  \item \textbf{Cyclical time encodings:} Universal time and day-of-year encoded as sine/cosine pairs to represent diurnal and seasonal structure in ionospheric conductance without ordinal leakage.
+  \item \textbf{Missing-value and freshness flags:} Binary indicators for GOES gaps and LEO orbital coverage, allowing the model to condition on data quality rather than treating imputed values as fully observed.
+  \item \textbf{Recent ground state:} Lagged $|dB/dt|$ from the target stations, providing short-memory persistence features consistent with the gray-box approach of Camporeale et al. (2020).
+\end{itemize}
+
+\section*{Success Criteria}
+The project will be considered successful if the primary LightGBM classifier outperforms persistence and climatology on the held-out 2024 test set. The main evaluation metric is Heidke Skill Score (HSS), with a target of \(HSS > 0.35\). A secondary evaluation will include Brier Skill Score (\(BSS > 0.10\) relative to climatology), ROC AUC, precision at the selected operating threshold, and calibration assessed with a reliability diagram and expected calibration error. If the LSTM also outperforms LightGBM, that will support the hypothesis that explicit temporal memory adds predictive value beyond engineered lag features.
+
+\newpage
+\section*{References}
+ 
+\begin{enumerate}
+    \item Billcliff, N., et al. (2026). Extended lead-time geomagnetic storm forecasting with solar wind ensembles and machine learning. \textit{Space Weather}.
+ 
+    \item Camporeale, E., et al. (2020). A gray-box model for a probabilistic estimate of regional ground magnetic perturbations: Enhancing the NOAA operational Geospace model with machine learning. \textit{Journal of Geophysical Research: Space Physics}.
+ 
+    \item Camporeale, E., et al. (2025). Verification of the NOAA Space Weather Prediction Center solar flare forecast 1998--2024. \textit{Space Weather}.
+ 
+    \item Chen, S., et al. (2025). GeoDGP: One-hour ahead global probabilistic geomagnetic perturbation forecasting using deep Gaussian process. \textit{Space Weather}.
+ 
+    \item Sun, Z., et al. (2022). A review of Earth artificial intelligence. \textit{Computers \& Geosciences}.
+\end{enumerate}
+
+\end{document}

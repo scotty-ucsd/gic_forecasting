@@ -1,0 +1,132 @@
+--- start{review11_6.pdf} ---
+DSC 288R - Peer Review Template
+
+Group doing the review - 11
+Names of your group members: Alex Twoy
+
+
+Review for group - Group 6
+
+
+Title of the project being reviewed: Physics-Informed Machine Learning for Regional
+Geomagnetic Hazard Forecasting
+
+
+Summary of their solution:
+Outline   your   understanding   of   what   problem     they   are   solving and their
+approach/methodology.
+
+
+Based on the video, Scotty is building an ML pipeline predicting regional geomagnetic
+hazard forecasting near the North Pole, which is difficult to predict. To do this, he is
+using binary classification to see whether an event is dangerous or not.
+
+
+Three strengths of their approach:
+What are the positives?
+   1.​ I liked how Scotty explained what he was building at the beginning, so that the
+      audience knows what is going on
+   2.​ Scotty did a good job explaining why the work he is doing matters
+   3.​ Scotty did great when doing his literature review (he went really in-depth)
+
+
+Three weaknesses of their approach:
+What can be done better, and how, in your opinion, can they improve?
+   1.​ While presenting, it is best to avoid filler words such as “uh” or “um” (during the
+      presentation, I heard these words a bunch of times)
+   2.​ There were some pauses while Scotty was presenting (I feel like there should
+      not be so many pauses when a speaker is presenting, so I think he should have
+      practiced more before turning in the final recording)
+   3.​ Scotty should not use terms like “Joe Schmo” since I did not really know what he
+      was referring to when he said that
+
+
+Other comments:
+Anything else you wish to add?
+I highly recommend not presenting while tired, so I wish Scotty had more energy. This
+could have been a reason why his presentation skills were not at their best.
+
+--- end {review11_6.pdf} ---
+--- start{reviewG5_6.pdf} ---
+288R - Peer Review Template
+
+Group doing the review - 5
+Names of your group members: Angela Watson, Cameron Hensley, Sripriya
+Panchapakesan
+
+
+Review for group - 6
+
+
+Title of the project being reviewed: Physics-Informed Machine Learning for Regional
+Geomagnetic Hazard Forecasting
+
+
+Summary of their solution:
+Outline your understanding of what problem they are solving and their
+approach/methodology.
+
+
+The project builds per-station binary classifiers to predict dangerous geomagnetic
+disturbances one hour ahead at four high-latitude monitoring sites (ABK, MEA, SOD,
+YKC), using ten years of multi-layer minute-resolution data (268 engineered features),
+comparing baseline and ML models (including LightGBM and LSTM), and evaluating
+mainly with the Heidke Skill Score to provide station-level hazard warnings where
+current forecasts are only global.
+
+
+Three strengths of their approach:
+​      What are the positives?
+    1.​ S1: Rigorous leakage prevention. They enforce strict temporal validity so models
+       only see information available at prediction time (at least one hour before the
+       event), using multiple programmatic checks: backward-only rolling windows,
+       time-ordered splits, no future-looking columns, and automated audits. That
+       reduces a common failure mode in time-series forecasting.
+    2.​ S2: Sun-to-ground data with physics-informed features. The dataset spans five physical
+       layers (Sun X-ray, solar wind, high/low orbit magnetics, ground stations) over about ten years
+       at one-minute resolution, giving earlier upstream signals than ground-only work. They
+       engineer 268 features, including domain quantities (e.g., Newell coupling, southward Bz) that
+       reflect how energy couples to the ground, which should help performance and
+       generalization.
+    3.​ S3: Design and evaluation fit for rare, station-specific hazards. They train
+       separate binary classifiers per station (ABK, MEA, SOD, YKC) instead of one
+       global model, respecting different event rates and local responses. For rare
+       positive events, they prioritize Heidke Skill Score over accuracy and tune
+       decision thresholds on validation data, aligning metrics with operational use.
+
+
+Three weaknesses of their approach:
+​      What can be done better and how in your opinion can they improve?
+    1.​ W1: Limited execution, no end-to-end or model results yet. Work is
+       demonstrated for only one month (January 2015); the full 2015–2024 pipeline
+       has not been run. No models are trained or evaluated, including
+       persistence/climatology baselines, so it is unclear whether the data design and
+       feature engineering improve prediction. Metrics like HSS and PR-AUC have no
+       reference point until baselines exist.
+    2.​ W2: Rare-event and station-level strategy are underdeveloped. EDA shows the
+       target is extremely rare, but the plan does not clearly address class imbalance
+       at training time (threshold tuning and HSS help at evaluation but are not a
+       substitute for training-time handling, especially for LogReg and LightGBM).
+       Separate models per station need stronger justification: some sites may have
+       too few positives for reliable models, and tradeoffs (compute, tuning, which
+       station to prioritize) are not spelled out, including a fallback if all four cannot be
+       finished.
+    3.​ W3: Scope ambition and data-quality risks. Planning five model types (including
+       LSTM as a stretch goal) plus four station-specific models may be too much for
+       the timeline; effort might be better focused on a well-evaluated LightGBM (and
+       baselines) for at least one station. OMNI solar wind — critical for features like Bz
+       and speed — has ~23% missingness from satellite gaps; missingness flags
+       mitigate but leave a large share of primary solar-wind measurements absent.
+
+
+Other comments:
+​      Anything else you wish to add.
+Review was slides-only (no video), so motivation and design are clearer than the
+team’s reasoning and live walkthrough. The deck is strong on literature-to-design
+mapping (more data sources, station-level prediction, leakage controls), reproducibility
+(fast demo commands and artifact pipelines), and tuning plans (e.g., scale_pos_weight
+for LightGBM). Still, most implementation is ahead of them—full pipeline, training, and
+evaluation are not done—and without a recording it is harder to judge whether they
+can finish in time or how they will prioritize when scope is tight.
+
+--- end {reviewG5_6.pdf} ---

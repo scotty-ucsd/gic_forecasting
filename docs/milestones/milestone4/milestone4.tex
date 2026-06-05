@@ -1,0 +1,283 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{array}
+
+\begin{document}
+
+\title{Group 6\\
+Station-Level Geomagnetic Disturbance Forecasting with Multi-Source Machine Learning}
+
+\author{\IEEEauthorblockN{R. Scotty Rogers}
+\IEEEauthorblockA{\textit{Hal{\i}c{\i}o\u{g}lu Data Science Institute} \\
+\textit{University of California San Diego} \\
+La Jolla, California, USA \\
+rsrogers@ucsd.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+Geomagnetic disturbances pose significant risks to power grids and satellite operations, yet predicting extreme local magnetic perturbations at the station level remains a difficult operational challenge. We present a multi-source machine learning pipeline that fuses solar wind, magnetospheric, low-Earth orbit, and ground-station observations to forecast binary threshold exceedances at four polar monitoring stations. We target the 95th and 99th percentile horizontal perturbation thresholds over 30, 60, and 120-minute forecast horizons. Evaluating six model families on a chronologically held-out 2024 test set, we find that tuned LightGBM achieves the highest test F2 scores across all targets, ranging from 0.627 to 0.794. Feature importance analysis confirms that L1 solar wind speed and dynamic pressure are the dominant predictors. Notably, while the LSTM demonstrated strong validation performance, it suffered from severe overfitting, highlighting the difficulty of training sequence models on sparse space weather events.
+\end{abstract}
+
+\begin{IEEEkeywords}
+space weather, geomagnetic forecasting, machine learning, LightGBM, LSTM, classification
+\end{IEEEkeywords}
+
+\section{Introduction}
+Geomagnetic storms driven by solar activity induce rapid, ground-level magnetic field perturbations. Predicting when a specific station's horizontal perturbation will exceed a climatological extreme threshold is a critical binary classification problem at the intersection of space weather and operational risk management. Extreme $dB/dt$ events can induce geomagnetically induced currents (GICs) that threaten power-grid stability, disrupt navigation, and damage high-voltage transformers [1]. Providing precise, short-lead-time warnings (30 to 120 minutes) enables grid operators to take protective action, directly addressing the urgent demand for regionalized, geographically specific space weather forecasts outlined by the Space Weather Advisory Group [2] and the 2025 Heliophysics Decadal Survey [3].
+
+Existing operational forecasts often emphasize broad global indices, which are valuable for characterizing overall storm severity but fail to resolve localized, station-level disturbance risks. The integration of machine learning into space weather forecasting has shown significant promise in bridging this gap [4]. However, current state-of-the-art competing approaches, including probabilistic deep learning models [5] and gray-box classification systems [6, 7], frequently rely on ground-derived indices as input features or evaluate performance using pooled datasets. This can create a circular dependency on vulnerable ground infrastructure and mask spatial generalization failures. Furthermore, models trained exclusively on curated storm datasets are highly susceptible to selection bias, often leading to severe false-alarm rates during quiet periods [8].
+
+To address these limitations, we propose a multi-source machine learning pipeline that models the pure space-to-ground causal chain (solar flares to solar wind to magnetosphere to ionosphere to ground). By utilizing a chronological train, validation, and test split, we evaluate whether skill is spatially robust across distinct polar monitoring stations without succumbing to temporal leakage or quiet-time bias.
+
+The input to our system is a 1-minute cadence multi-source feature vector spanning solar X-ray flux, L1 solar wind state, GEO magnetospheric field, LEO residual field, and local SuperMAG station geometry. The output is a binary prediction of whether the station's horizontal magnetic perturbation will exceed its historical p95 (or p99) threshold within the next 30, 60, or 120 minutes.
+
+\section{Related Work}
+
+Current approaches to space weather forecasting generally fall into two broad categories: first-principles simulations and data-driven statistical models. While the state of the art is rapidly evolving, significant gaps remain in translating global predictive skill into reliable, localized warnings. We structure our review of prior literature by methodology and address how our approach attempts to close these gaps.
+
+\subsection{Physics-Based and Empirical Prediction}
+Operational forecasting has historically relied on magnetohydrodynamic simulations and empirical models to predict global geomagnetic indices such as Dst and Kp [9, 6]. While these systems are physically rigorous and capture large-scale magnetospheric dynamics, they are computationally expensive and generally fail to resolve the localized $dB/dt$ spikes responsible for ground-level infrastructure damage. Our approach differs fundamentally by predicting threshold exceedances at specific regional stations rather than relying on global, aggregated proxies.
+
+\subsection{Machine Learning for Geomagnetic Disturbances}
+Recent work has increasingly applied machine learning to forecast localized disturbances. Deep learning and gradient-boosted trees have shown promise in mapping upstream solar wind parameters to ground-level perturbations [10, 11]. However, many of these efforts evaluate performance using pooled datasets or single-station scopes, which can mask spatial generalization failures. Furthermore, competing state-of-the-art models like GeoDGP [5] rely heavily on ground-derived indices as input features, creating a circular dependency. Our methodology addresses this by fusing a strictly space-to-ground observation chain across multiple stations, ensuring predictions are not dependent on compromised ground sensors during extreme events.
+
+\subsection{Solar Wind Coupling Functions}
+The interaction between the solar wind and Earth's magnetosphere is highly nonlinear. To improve model interpretability and physical consistency, researchers often utilize derived coupling functions. The formulation by Newell et al. [12] serves as a robust proxy for dayside magnetic reconnection efficiency. By explicitly integrating a Newell-derived feature into our dataset, we guide our algorithms to rely on established physical relationships rather than memorizing spurious patterns in the raw solar wind plasma data.
+
+\subsection{Sequence Models in Space Weather}
+Because the Sun-to-ground causal chain exhibits significant temporal lag, recurrent neural networks, particularly LSTMs, are a popular choice for space weather forecasting [13, 14]. While LSTMs are theoretically well-suited for capturing delayed magnetospheric loading, prior literature notes their tendency to overfit when confronted with the sparse, heavy-tailed distributions typical of severe storms. Our inclusion of an LSTM baseline explicitly tests this limitation, confirming that without extensive regularization, recurrent architectures struggle to generalize rare extreme events compared to tabular ensemble methods.
+
+\subsection{Class Imbalance and Event Verification}
+A persistent challenge in rare-event forecasting is the quiet-time bias. Standard accuracy metrics often artificially inflate the perceived skill of models that simply predict the negative majority class. Recent literature emphasizes the need for verification practices tailored to highly imbalanced operational settings, advocating for metrics such as the Heidke Skill Score (HSS) and precision-recall AUC [4, 11]. We adopt these recommended verification practices, framing our evaluation around threshold-specific F2 scores and HSS to ensure our results reflect genuine predictive skill rather than baseline exploitation.
+
+\section{Dataset and Features}
+
+\subsection{Dataset Description}
+To capture the complete space-to-ground causal chain, we constructed a multi-source dataset by fusing five distinct observational layers: solar X-ray flux from GOES XRS [15], upstream solar wind and interplanetary magnetic field conditions from OMNI [16], geostationary magnetic field context from GOES MAG [17], low-Earth orbit magnetic residuals from the Swarm constellation [18], and ground magnetometer measurements from the SuperMAG network [19, 20]. The final dataset spans from January 2015 through December 2024 at a 1-minute temporal cadence, restricted to four high-latitude polar stations: ABK, MEA, SOD, and YKC.
+
+While this multimodal dataset could support various predictive tasks, such as continuous regression of the perturbation magnitude or global index forecasting, we selected a station-level binary classification task. Predicting whether the local horizontal magnetic field derivative ($dB/dt_H$) exceeds a historical extreme threshold is more directly aligned with operational power grid safety requirements than predicting global averages.
+
+To rigorously prevent temporal leakage, the dataset was split chronologically rather than randomly. The training split covers 2015 to 2022 (12,817,451 rows), the validation split covers 2023 (1,719,840 rows), and the test split covers 2024 (1,831,680 rows). Table I summarizes the split sizes and baseline event rates. The p95 and p99 exceedance targets represent severe and extreme events, respectively, with the p99 rate reflecting approximately 10 percent of active intervals due to our multi-horizon labeling window.
+
+\begin{table}[htbp]
+\caption{Table I: Dataset split statistics. Event rates are averaged across the three forecast horizons within each percentile family (p95 or p99).}
+\centering
+\begin{tabular}{lrrcrr}
+\toprule
+Split & Rows & Stations & Date Range & p95 Rate & p99 Rate \\
+\midrule
+Train & 12,817,451 & 4 & 2015-01-01 to 2022-12-31 & 0.291 & 0.101 \\
+Val & 1,719,840 & 4 & 2023-01-01 to 2023-12-31 & 0.349 & 0.125 \\
+Test & 1,831,680 & 4 & 2024-01-01 to 2024-12-31 & 0.282 & 0.097 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Preprocessing and Feature Engineering}
+Raw data from all five sources underwent source-specific cleaning to handle instrument saturation flags and unphysical values. The streams were then resampled to a synchronized 1-minute cadence. Systemic missingness, particularly in the L1 monitor data (approximately 20 percent missingness), was addressed using forward-filling up to source-specific staleness limits. Explicit binary indicator flags were appended to allow the models to condition on data freshness rather than treating imputed data as observed truth.
+
+Feature engineering was structured to respect chronological causality, utilizing strictly past-facing data. The initial 51 raw features were expanded into a broader set incorporating lagged variables, 10-minute and 30-minute rolling statistics, and cyclical temporal encodings (sine and cosine of universal time and day of year) to capture diurnal and seasonal ionospheric conductance patterns. Furthermore, we engineered physics-informed features, such as the Newell coupling function derived from [12], to explicitly quantify dayside magnetic reconnection efficiency. Feature standardization (zero mean and unit variance) was fit exclusively on the training split and applied identically to the validation and test splits.
+
+Following feature importance evaluation, the feature space was reduced to mitigate noise. The standard LightGBM baseline utilized 20 core features, while the tuned variant utilized 44 features, including regime-style indicators derived after dataset fusion. Figure 1 visualizes the relative importance of these features, confirming that L1 solar wind properties dominate predictive skill across all horizons.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{/mnt/data/dsc288_capstone/data/reports/analysis/latex_plots/figure1_feature_importance.pdf}
+\caption{Figure 1: Feature importance summary across the fused feature set.}
+\end{figure}
+
+\section{Methods}
+
+\subsection{Target Construction}
+The primary objective is to predict extreme geomagnetic activity at specific high-latitude stations. To achieve this, station-specific percentile thresholds were estimated exclusively from the training split to prevent any temporal leakage from the validation or test periods. For a given station and time $t$, a binary target is assigned a value of 1 if the maximum horizontal perturbation magnitude ($|dB/dt_H|$) in the subsequent $H$ minutes exceeds the corresponding p95 or p99 threshold. We evaluate three distinct forecast horizons ($H \in \{30, 60, 120\}$), producing six binary forecasting targets per station-time row.
+
+\subsection{Models}
+We evaluate six model families ranging from simple statistical baselines to complex deep learning architectures. All models were evaluated under identical chronological splits.
+
+\textbf{Climatology and Persistence:} The climatology baseline predicts the training-split event rate as a constant probability for all future time steps, using a fixed decision threshold of 0.05. The persistence baseline assumes the current state continues into the future, predicting a positive event if the current local $|dB/dt_H|$ measurement already exceeds the station's target threshold. These serve as the absolute operational floors for long-horizon and short-horizon forecasting, respectively.
+
+\textbf{Logistic Regression:} Serving as the interpretable, linear baseline, an L2-regularized logistic regression model [21] was trained on 51 standardized features. The regularization parameter $C$ was selected from $\{0.01, 0.1, 1, 10\}$ based on validation performance. This model tests whether non-linear feature interactions are strictly necessary for this forecasting task.
+
+\textbf{LightGBM (Fixed and Tuned):} Gradient-boosted decision trees, specifically LightGBM [22, 23], were utilized as the primary non-linear tabular learners. The fixed-grid LightGBM variant was trained on a reduced set of 20 features using a stable configuration (n\_estimators=300, learning\_rate=0.05, num\_leaves=31). To push performance limits, a Tuned LightGBM variant underwent a random search over 20 trials across 9 hyperparameters. The tuned variant utilized an expanded 44-feature set that included physics-informed regime indicators and employed early stopping based on the validation F2 score.
+
+\textbf{LSTM (Physics-Informed Architecture):} Motivated by the information bottleneck principle and physics-informed neural network architectures [9], we implemented a recurrent sequence model using PyTorch [24]. The LSTM processes a 30-minute lookback window and employs a hierarchically narrowing hidden layer architecture. This design structurally enforces signal compression along the physical Sun-to-ground causal chain, distilling high-variance raw solar wind measurements into a sparse, localized ground response. Due to computational constraints, the network was trained for 4 epochs.
+
+\subsection{Addressing Class Imbalance}
+Geomagnetic extreme events are inherently rare, leading to severe class imbalance, particularly for the p99 targets. We employed three distinct imbalance handling strategies depending on the model architecture:
+\begin{enumerate}
+    \item \textbf{Loss Rescaling:} The Logistic Regression and fixed-grid LightGBM models utilized balanced class weights during training to penalize minority-class errors proportionally.
+    \item \textbf{Threshold Tuning:} The Tuned LightGBM model did not use explicit training-time reweighting; instead, it relied on empirical threshold optimization on the validation set to maximize the F2 score.
+    \item \textbf{Positive Class Weighting:} The LSTM applied a positive class weight ($w^+ = N^- / N^+$) directly within the binary cross-entropy loss function (\texttt{BCEWithLogitsLoss}).
+\end{enumerate}
+
+\subsection{Evaluation Metrics}
+Standard accuracy is a misleading metric for highly imbalanced datasets, as a model could achieve over 90 percent accuracy simply by never predicting a p99 extreme event. Instead, our primary evaluation metric is the generalized $F_\beta$ score, defined as:
+
+$$F_\beta = (1 + \beta^2) \frac{\text{Precision} \cdot \text{Recall}}{(\beta^2 \cdot \text{Precision}) + \text{Recall}}$$
+
+The traditional $F_1$ score ($\beta=1$) computes the harmonic mean, assigning equal weight to precision and recall. However, in the context of power grid operations, a missed extreme event (false negative) can lead to catastrophic transformer damage and cascading failures, whereas a false alarm (false positive) typically only incurs the cost of temporary preventative load balancing. To reflect this asymmetric operational risk, we select $\beta=2$ ($F_2$ score), which weights recall twice as heavily as precision [11, 4]:
+
+$$F_2 = \frac{5 \cdot \text{Precision} \cdot \text{Recall}}{4 \cdot \text{Precision} + \text{Recall}}$$
+
+To rigorously verify that the models exhibit genuine predictive skill rather than simply exploiting the baseline event rate, we also evaluate the Heidke Skill Score (HSS). Letting $TP$, $TN$, $FP$, and $FN$ represent the counts of true positives, true negatives, false positives, and false negatives respectively, the HSS is computed as:
+
+$$HSS = \frac{2(TP \cdot TN - FP \cdot FN)}{(TP + FN)(FN + TN) + (TP + FP)(FP + TN)}$$
+
+A positive HSS indicates predictive skill greater than random chance based on climatological frequencies, while an HSS of 1 indicates a perfect forecast. Models were additionally evaluated using the Precision-Recall Area Under the Curve (PR-AUC), precision, and recall.
+
+\section{Experiments, Results, and Discussion}
+
+All six model families were trained using the chronological split design and evaluated on the held-out 2024 test set. The validation split was utilized exclusively for hyperparameter selection and decision-threshold tuning prior to final testing. Table II and Figure 2 summarize the primary test-set F2 performance across all six forecasting targets.
+
+\begin{table}[htbp]
+\caption{Table II: Held-out 2024 test F2 scores by model and target. Bold indicates the best score in each row. F2 weights recall more heavily than precision ($\beta=2$).}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Target & Clim. & Pers. & LR & LGBM & LGBM-T & LSTM \\
+\midrule
+p95 30m & 0.579 & 0.304 & 0.546 & 0.685 & \textbf{0.720} & 0.202 \\
+p99 30m & 0.266 & 0.197 & 0.284 & 0.582 & \textbf{0.627} & 0.375 \\
+p95 60m & 0.655 & 0.254 & 0.606 & 0.725 & \textbf{0.755} & 0.212 \\
+p99 60m & 0.339 & 0.153 & 0.359 & 0.615 & \textbf{0.657} & 0.222 \\
+p95 120m & 0.735 & 0.204 & 0.671 & 0.769 & \textbf{0.794} & 0.267 \\
+p99 120m & 0.431 & 0.113 & 0.437 & 0.633 & \textbf{0.681} & 0.208 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{/mnt/data/dsc288_capstone/data/reports/analysis/latex_plots/figure3_test_f2_by_target_model.pdf}
+\caption{Figure 2: Test F2 by target and model. LGBM Tuned consistently outperforms all other models, while the LSTM model exhibits a severe performance drop on the test set.}
+\end{figure}
+
+\subsection{Model Performance and Baselines}
+As demonstrated in Figure 2, the Tuned LightGBM (LGBM-T) achieved the highest test F2 on all six targets. The hyperparameter tuning step, which included a random search over 20 trials and an expanded 44-feature set, added between 0.03 and 0.05 F2 over the untuned LightGBM. This confirms that extensive hyperparameter search is worthwhile for this task.
+
+The baseline comparisons yielded a surprising result: Climatology is a remarkably strong baseline. It outperformed Persistence on all six targets and beat the Logistic Regression model on the three p95 targets (30m, 60m, and 120m horizons). Because the p95 targets have relatively high event rates (22 to 36 percent), a constant-rate predictor calibrated on the training set is difficult to beat with a simple linear model. The poor performance of the Persistence baseline underscores that the raw ground state alone is insufficient for reliable warning.
+
+\subsection{Generalization and LSTM Collapse}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{/mnt/data/dsc288_capstone/data/reports/analysis/latex_plots/figure4_lgbm_tuned_train_val_test_f2.pdf}
+\caption{Figure 3: Train, validation, and test F2 scores for the Tuned LightGBM model by target, illustrating temporal generalization.}
+\end{figure}
+
+Figure 3 illustrates the train, validation, and test F2 scores for the Tuned LightGBM model. The train-validation gap is small (0.01 to 0.08 F2), indicating the tree-based model is not badly overfit. The validation-test gap is moderate (0.04 to 0.11 F2), which reflects the expected temporal distribution shift from 2023 to 2024 as Solar Cycle 25 reached its maximum. Figure 3 also highlights target difficulty: the p95 120m target is the easiest (test F2 0.794) because the 120-minute lead time integrates more signal from the slowly evolving solar wind state, whereas the p99 30m target is the hardest (test F2 0.627).
+
+In stark contrast, the LSTM model severely overfit the training data. While its validation F2 scores ranged from 0.74 to 0.85 across all targets, its test F2 collapsed to between 0.20 and 0.37. The validation-test gap exceeded 0.59 for the p95 30m target, making the LSTM the worst-performing model on the test set despite having the best validation scores. This collapse is likely due to the small number of training epochs (4), a lack of dropout tuning, and the temporal gap between the 2022 training data and the 2024 test data.
+
+\subsection{Skill Verification and Operational Tradeoffs}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{/mnt/data/dsc288_capstone/data/reports/analysis/latex_plots/figure5_lgbm_tuned_precision_recall_f2.pdf}
+\caption{Figure 4: Precision, recall, and F2 scores on the test split by target for the Tuned LightGBM model.}
+\end{figure}
+
+To confirm that the Tuned LightGBM model is operationally viable, we examined its full metric profile, detailed in Table III and Figure 4. The model consistently favors high recall (0.75 to 0.92) because the validation-selected decision thresholds are intentionally low (0.15 to 0.20). This prioritizes event detection over false-alarm reduction, strictly aligning with the F2 objective. Consequently, precision is lower (0.38 to 0.51), meaning roughly half of the predicted events are false alarms. For a geomagnetic storm warning system, this is an acceptable tradeoff, as missing an extreme event is operationally worse than issuing a false alarm. The precision-recall gap is widest for the p99 30m target, where the model predicts broadly to catch rare extremes.
+
+\begin{table}[htbp]
+\caption{Table III: Held-out 2024 test metrics for the Tuned LightGBM model. Positive HSS indicates skill above chance.}
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+Target & Prec. & Recall & F2 & PR-AUC & HSS \\
+\midrule
+p95 30m & 0.403 & 0.895 & 0.720 & 0.719 & 0.368 \\
+p99 30m & 0.381 & 0.747 & 0.627 & 0.579 & 0.456 \\
+p95 60m & 0.464 & 0.894 & 0.755 & 0.761 & 0.391 \\
+p99 60m & 0.391 & 0.791 & 0.657 & 0.627 & 0.456 \\
+p95 120m & 0.511 & 0.921 & 0.794 & 0.803 & 0.368 \\
+p99 120m & 0.380 & 0.850 & 0.681 & 0.671 & 0.419 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Finally, the PR-AUC ranges from 0.58 on the hardest target to 0.80 on the easiest, reflecting the difficulty gradient. Crucially, the Heidke Skill Score (HSS) ranges from 0.37 to 0.46, confirming genuine skill above random chance on all targets. Because HSS is independent of the base rate, it serves as the cleanest complement to F2 for imbalanced classification.
+
+\section{Conclusion}
+
+This project successfully developed and evaluated a reproducible machine learning pipeline for station-level geomagnetic disturbance forecasting. By fusing observational data spanning the solar wind, geostationary orbit, low-Earth orbit, and ground-based magnetometers, we created a comprehensive space-to-ground dataset. Across all six forecasting targets, the Tuned LightGBM model delivered the strongest held-out 2024 performance, achieving test F2 scores between 0.627 and 0.794. The results demonstrate that tree-based ensemble models utilizing engineered physics features, particularly L1 solar wind dynamic pressure and the Newell coupling function, can provide skillful, localized predictions of extreme magnetic perturbations. Furthermore, the evaluation revealed that Climatology serves as a surprisingly robust baseline for high-latitude stations, whereas the Persistence model and the linear Logistic Regression model struggled to provide meaningful predictive value.
+
+\subsection*{Gap Analysis}
+The project evolved significantly from its original proposal. The initial goals included an extensive evaluation of sequence models, specifically an LSTM with full hyperparameter tuning, to capture the delayed magnetospheric loading dynamics. However, computational constraints and long training times limited the LSTM implementation to only four training epochs without rigorous architecture search or dropout regularization. Consequently, the LSTM severely overfit the training data and failed to generalize to the 2024 test year, representing the most significant gap between our original objectives and the final deliverables.
+
+While the tabular pipeline and gradient boosting models successfully achieved the core forecasting goals, future work should allocate sufficient computational resources to properly tune the recurrent architectures. Expanding sequence-model training, exploring Monte Carlo dropout for formal uncertainty quantification, and evaluating the pipeline across a broader set of SuperMAG stations will be essential steps to transition this framework toward operational readiness.
+
+\section*{Contributions}
+This was a solo project completed by R. Scotty Rogers. All major project components were designed, implemented, and evaluated by the author, including the multi-source data acquisition pipeline, source cleaning and preprocessing scripts, time-safe fusion logic, target construction, feature engineering, dataset building, model training, evaluation scripts, and report figure generation. The author also performed the literature review, experimental design, results analysis, and final report preparation.
+
+\section*{Reflections}
+If repeating the project, the main change would be to allocate more compute budget and tuning time to the sequence-model branch earlier in the timeline. In practice, the strongest results came from the tabular pipeline, engineered lag features, and tuned LightGBM, while the LSTM remained underdeveloped relative to the rest of the system. A second improvement would be to expand the station set beyond the four analyzed here, which would strengthen claims about spatial generalization. More broadly, the project reinforced that chronological splitting, leakage audits, and strong baseline comparisons are essential for any time-series forecasting study that aims to make operational claims.
+
+\section*{Reply to Review}
+\begin{itemize}
+    \item The reviewer noted that Milestone 3 lacked end-to-end execution and baseline model results. We addressed this by completing the full 2015-2024 pipeline, building chronological train/validation/test splits, and evaluating six model families on the held-out 2024 test set. Tuned LightGBM achieved the best test F2 on all six targets, ranging from 0.627 to 0.794.
+
+    \item The reviewer noted that rare-event handling was underdeveloped. We addressed this by using explicit training-time imbalance strategies: balanced class weights for logistic regression and fixed LightGBM, validation-based threshold optimization for tuned LightGBM, and positive-class weighting for the LSTM. We also reported F2, PR-AUC, and HSS rather than relying on accuracy.
+
+    \item The reviewer asked about the station-level strategy and the feasibility of separate modeling. We addressed this by completing experiments across all four stations within a unified chronological split framework and by using station-specific threshold construction to preserve local event definitions. This design preserved regional specificity while still allowing aggregate comparison across targets and models.
+
+    \item The reviewer noted that the scope might be too broad and suggested focusing on LightGBM plus baselines. The final project effectively adopted that prioritization: the strongest results came from the baseline ladder and LightGBM variants, while the LSTM was included as a comparison model and ultimately showed poor test generalization.
+\end{itemize}
+
+\section*{References}
+
+[1] Keebler et al., "Extreme space weather events and failure modes in high-voltage infrastructure," Space Weather, 2025.
+
+[2] Space Weather Advisory Group (SWAG), "Report on Space Weather User Needs," 2024.
+
+[3] National Academies of Sciences, Engineering, and Medicine, "Heliophysics 2025 Decadal Survey: AI and Machine Learning Mandate," 2025.
+
+[4] E. Camporeale, "The challenge of machine learning in space weather: Nowcasting and forecasting," Space Weather, 2019.
+
+[5] S. Chen et al., "GeoDGP: One-hour ahead global probabilistic geomagnetic perturbation forecasting using deep Gaussian process," Space Weather, 2025.
+
+[6] Ferdousi et al., "State of the art in empirical storm prediction methodologies," Space Weather, 2025.
+
+[7] E. Camporeale et al., "Verification of the NOAA Space Weather Prediction Center solar flare forecast 1998-2024," Space Weather, 2025.
+
+[8] Abduallah et al., "Selection bias and false alarm rates in curated geomagnetic storm datasets," Space Weather, 2024.
+
+[9] E. Camporeale et al., "A gray-box model for a probabilistic estimate of regional ground magnetic perturbations: Enhancing the NOAA operational Geospace model with machine learning," Journal of Geophysical Research: Space Physics, 2020.
+
+[10] Grawe et al., "Machine learning for ground magnetic disturbance prediction," Space Weather, 2021.
+
+[11] Thaker et al., "Verification metrics for imbalanced rare-event space weather forecasting," Space Weather, 2025.
+
+[12] P. T. Newell et al., "A nearly universal solar wind-magnetosphere coupling function inferred from 10 space weather quantities," Journal of Geophysical Research: Space Physics, 2007.
+
+[13] Y. Chen et al., "Geomagnetic storm forecasting using deep learning," Space Weather, 2019.
+
+[14] N. Billcliff et al., "Extended lead-time geomagnetic storm forecasting with solar wind ensembles and machine learning," Space Weather, 2026.
+
+[15] NOAA National Centers for Environmental Information, "GOES X-Ray Sensor (XRS) Data," 2020.
+
+[16] N. Papitashvili and J. King, "OMNI 1-minute solar wind data," NASA Space Physics Data Facility, 2020.
+
+[17] NOAA National Centers for Environmental Information, "GOES Magnetometer Data," 2021.
+
+[18] European Space Agency, "Swarm constellation Level-1b and Level-2 magnetic field data," ESA Earth Online, 2013.
+
+[19] J. W. Gjerloev, "A Global Ground-Based Magnetometer Initiative," Eos, Transactions American Geophysical Union, 2009.
+
+[20] J. W. Gjerloev, "The SuperMAG data processing technique," Journal of Geophysical Research: Space Physics, 2012.
+
+[21] F. Pedregosa et al., "Scikit-learn: Machine Learning in Python," Journal of Machine Learning Research, 2011.
+
+[22] G. Ke et al., "LightGBM: A Highly Efficient Gradient Boosting Decision Tree," Advances in Neural Information Processing Systems, 2017.
+
+[23] T. Chen and C. Guestrin, "XGBoost: A Scalable Tree Boosting System," Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, 2016.
+
+[24] A. Paszke et al., "PyTorch: An Imperative Style, High-Performance Deep Learning Library," Advances in Neural Information Processing Systems, 2019.
+\end{document}
