@@ -1,5 +1,7 @@
 # Project Pipeline and Reproducibility Guide
 
+* NOTE: check all args for bash commands
+
 This repository contains a modular machine learning pipeline for station-level geomagnetic disturbance forecasting using fused space weather observations from GOES XRS, GOES magnetometer, OMNI, Swarm, and SuperMAG.
 
 Because the full historical workflow depends on external data providers, multi-year downloads, and non-redistributable SuperMAG data, the repository supports two reproducibility paths:
